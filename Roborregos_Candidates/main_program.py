@@ -14,10 +14,9 @@ Sensors:
 
 
 def main():
-    from queue import LifoQueue
     import copy
 
-    #move robot explorer
+    #funtions explorer
     def direction_check(direction_check, direction_look):
         print("d_l:", direction_look)
         print("d_c:", direction_check)
@@ -83,7 +82,7 @@ def main():
                 return True
         return False
 
-    #move robot
+    #funtions move robot
     def funcions_move(direction):
         if direction == 1:
             robot.move_forward()
@@ -148,7 +147,7 @@ def main():
 
         return direction_look, pos_next
 
-    #colors
+    #others
     def color_count(color, colors):
         match color:
             case 'red':
@@ -165,18 +164,19 @@ def main():
                 colors[5] += 1
         return colors
 
-    def color_white(colors, colr, map_color):
+    def color_white(colors_n, map_color):
         print("--------------------")
         print("Finding color white...")
-        for i in range(0, len(colors)):
-            if colors[i] == 7:
-                color = colr[i]
+        colors = ['red', 'blue', 'green', 'cyan', 'magenta', 'yellow']
+        for i in range(0, len(colors_n)):
+            if colors_n[i] == 7:
+                color = colors[i]
 
         for i in range(0, len(map_color)):
             for e in range(0, len(map_color[i])):
                 if map_color[i][e] == 'white':
                     print("Color white is ", color)
-                    print("Color position:", [e,i])
+                    print("Color position:", [e, i])
                     print("--------------------")
                     return [e, i], color
 
@@ -213,14 +213,75 @@ def main():
                 for num in colors_num:
                     if num >= 3:
                         pos_exit[0] += 1
-        print("Exit pos")
+        print("Exit pos", pos_exit)
         print("--------------------")
         return pos_exit
 
-    def DFS_explorer(direction_look, pos, colors):
+    # DFS
+    class item_DFS_S:
+        def __init__(self, pos, map_visited, acum_vis, code_pos):
+            self.pos = pos
+            self.map_visited = map_visited
+            self.acum_vis = acum_vis
+            self.code_pos = code_pos
+
+    def DFS(pos_ini, pos_final, map_conec):
+        movi = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+        map_visited = [[False for i in range(0, 6)] for i in range(0, 8)]
+        map_visited[pos_ini[1]][pos_ini[0]] = True
+        paths = []
+        ini_item_white = item_DFS_S(pos_ini, map_visited, 1, 0)
+        stack = []
+        stack.append(ini_item_white)
+        print("####################")
+        print("starting DFS...")
+
+        while len(stack) > 0:
+            item = copy.deepcopy(stack[-1])
+            if item.pos == pos_final:
+                path = []
+                for step in stack:
+                    path.append(step.pos)
+
+                paths.append(path)
+                stack.pop()
+                continue
+
+            bool = False
+            for i in range(item.code_pos, 4):
+                posX = item.pos[0] + movi[i][0]
+                posY = item.pos[1] + movi[i][1]
+                if posX > -1 and posX < 6 and posY > -1 and posY < 8:
+                    if item.map_visited[posY][posX] == False and [posX, posY] in map_conec[item.pos[1]][
+                        item.pos[0]]:
+                        stack[-1].code_pos = i + 1
+                        item.pos[0] = posX
+                        item.pos[1] = posY
+                        item.map_visited[posY][posX] = True
+                        item.acum_vis += 1
+                        item.code_pos = 0
+                        stack.append(item)
+                        bool = True
+                        break
+            if not bool:
+                stack.pop()
+        if len(paths) > 0:
+            paths = min(paths, key=len)
+        print("Paths found: ", paths)
+        print("####################")
+        return paths
+
+    #move
+    def move_spefific(path, direction_l, po):
+        for pos_next in path:
+            direction_l, po = move(direction_l, pos_next, po)
+        return direction_l, po
+
+    def explorer(direction_look, pos):
         # explorer of laberint
+        movi = [[1, 0], [0, 1], [-1, 0], [0, -1]]
         sum_vis = 0
-        pos_stack = LifoQueue(maxsize=48)
+        colors = ['red', 'blue', 'green', 'cyan', 'magenta', 'yellow']
         map_visited = [[False for i in range(0, 6)] for i in range(0, 8)]
         map_conec = [[['.' for i in range(0, 4)] for i in range(0, 6)] for i in range(0, 8)]
         map_color = [['_' for i in range(0, 6)] for i in range(0, 8)]
@@ -230,25 +291,17 @@ def main():
         print("starting explorer...")
 
         while True:
-
-            print("_________")
-            for e in map_visited:
-                print(e)
-            print()
-            for e in map_conec:
-                print(e)
-            print()
-            for e in map_color:
-                print(e)
-            print("_________")
-
-            bool = False
             if not map_visited[pos[1]][pos[0]]:
-                map_visited[pos[1]][pos[0]] = True
                 sum_vis += 1
+                map_visited[pos[1]][pos[0]] = True
                 map_color[pos[1]][pos[0]] = robot.get_color()
                 robot.display_color(map_color[pos[1]][pos[0]])
                 colors_num = color_count(map_color[pos[1]][pos[0]], colors_num)
+
+                # stop
+                if sum_vis == 6 * 8:
+                    break
+
                 for i in range(0, 4):
                     posX = pos[0] + movi[i][0]
                     posY = pos[1] + movi[i][1]
@@ -263,10 +316,6 @@ def main():
                                 map_conec[posY][posX][n_ac] = "_"
                                 map_conec[pos[1]][pos[0]][n_an] = "_"
 
-            # stop
-            if sum_vis == 6 * 8:
-                break
-
             #move
             bool = False
             for i in range(0, 4):
@@ -275,7 +324,7 @@ def main():
                 if posX > -1 and posX < 6 and posY > -1 and posY < 8:
                     if map_visited[posY][posX] == False and [posX, posY] in map_conec[pos[1]][pos[0]]:
                         print(":", posX, posY, ":")
-                        pos_stack.put([pos[0], pos[1]])
+                        #pos_stack.put([pos[0], pos[1]])
                         direction_look, pos = move(direction_look, [posX, posY], pos)
                         bool = True
                         break
@@ -283,96 +332,38 @@ def main():
             if not bool:
                 print("________________")
                 print("back")
-                pos_old = pos_stack.get()
-                direction_look, pos = move(direction_look, pos_old, pos)
+                #pos_old = pos_stack.get()
+                paths_temporal = []
+                for row in range(len(map_visited)):
+                    for col in range(len(map_visited[0])):
+                        if not map_visited[row][col]:
+                            path_tem = DFS(pos, [col,row], map_conec)
+                            if len(path_tem) > 0:
+                                paths_temporal.append(path_tem)
+                print("Pos: ",pos)
+                print("__________________")
+
+                direction_look, pos = move_spefific(min(paths_temporal, key=len), direction_look, pos)
 
         print("####################")
         return direction_look, pos, map_conec, map_color, colors_num
 
-    class item_DFS_S:
-        def __init__(self, pos, map_visited, acum_vis, code_pos):
-            self.pos = pos
-            self.map_visited = map_visited
-            self.acum_vis = acum_vis
-            self.code_pos = code_pos
-    def DFS_move_specific(pos_ini, pos_final, map_conec):
-        map_visited = [[False for i in range(0, 6)] for i in range(0, 8)]
-        map_visited[pos[1]][pos[0]] = True
-        paths = []
-        ini_item_white = item_DFS_S(pos_ini, map_visited,  1, 0)
-        stack = []
-        stack.append(ini_item_white)
-        print("####################")
-        print("starting DFS...")
-
-        while len(stack) > 0:
-            print("________")
-            for e in stack:
-                print(e.pos)
-                #for i in e.map_visited:
-                #    print(i)
-                print(e.acum_vis)
-                print(e.code_pos)
-                print()
-            print("________")
-
-            item = copy.deepcopy(stack[-1])
-            if item.pos == pos_final:
-                path = []
-                for i in stack:
-                    path.append(i.pos)
-                paths.append(path)
-                stack.pop()
-                print("found")
-                print(path)
-                continue
-            bool = False
-            for i in range(item.code_pos,4):
-                posX = item.pos[0] + movi[i][0]
-                posY = item.pos[1] + movi[i][1]
-                if posX > -1 and posX < 6 and posY > -1 and posY < 8:
-                    if item.map_visited[posY][posX] == False and [posX, posY] in map_conec[item.pos[1]][item.pos[0]]:
-                        print("---",posX,posY,"---")
-                        stack[-1].code_pos = i + 1
-                        item.pos[0] = posX
-                        item.pos[1] = posY
-                        item.map_visited[posY][posX] = True
-                        item.acum_vis += 1
-                        stack.append(item)
-                        bool = True
-                        break
-            if not bool:
-                stack.pop()
-
-        paths = min(paths)
-        print("Paths found: ", paths)
-        print("####################")
-        return paths
-
-    def move_spefific(path, direction_l, po):
-        for pos_next in path:
-            direction_l, po = move(direction_l, pos_next, po)
-        return direction_l, po
-
-    # incial variables
-    movi = [[1, 0], [0, 1], [-1, 0], [0, -1]]
-    colors = ['red', 'blue', 'green', 'cyan', 'magenta', 'yellow']
-
+    # initial variables
     pos = [5, 0]  # inicial position
     direction_look = 'down'  # inicial look
 
     # main code
-    direction_look, pos, map_conec, map_color, colors_num  = DFS_explorer(direction_look, pos, colors)
+    direction_look, pos, map_conec, map_color, colors_num = explorer(direction_look, pos)
 
     #color white
-    pos_white, color_w = color_white(colors_num, colors, map_color)
+    pos_white, color_w = color_white(colors_num, map_color)
 
-    #Algorit exit
+    #Find exit
     pos_exit = find_exit(map_color)
 
     #DFS white
-    paths = DFS_move_specific(pos ,pos_white, map_conec)
-    direction_look, pos = move_spefific(paths, direction_look, pos)
+    paths_white = DFS(pos, pos_white, map_conec)
+    direction_look, pos = move_spefific(paths_white, direction_look, pos)
     print("##############################")
     print()
     print("El color faltanta es ", color_w)
@@ -380,15 +371,13 @@ def main():
     print("##############################")
 
     #DFS exit
-    paths = DFS_move_specific(pos, pos_exit,map_conec)
-    direction_look, pos = move_spefific(paths, direction_look, pos)
+    path_exit = DFS(pos, pos_exit,map_conec)
+    direction_look, pos = move_spefific(path_exit, direction_look, pos)
     print("##############################")
     print()
     print("Salida encontrada")
     print()
     print("##############################")
-
-
 
 if __name__ == "__main__":
     main()
