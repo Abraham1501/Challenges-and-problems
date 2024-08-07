@@ -239,10 +239,7 @@ def main():
         while len(stack) > 0:
             item = copy.deepcopy(stack[-1])
             if item.pos == pos_final:
-                path = []
-                for step in stack:
-                    path.append(step.pos)
-
+                path = [step.pos for step in stack]
                 paths.append(path)
                 stack.pop()
                 continue
@@ -324,7 +321,6 @@ def main():
                 if posX > -1 and posX < 6 and posY > -1 and posY < 8:
                     if map_visited[posY][posX] == False and [posX, posY] in map_conec[pos[1]][pos[0]]:
                         print(":", posX, posY, ":")
-                        #pos_stack.put([pos[0], pos[1]])
                         direction_look, pos = move(direction_look, [posX, posY], pos)
                         bool = True
                         break
@@ -337,9 +333,35 @@ def main():
                 for row in range(len(map_visited)):
                     for col in range(len(map_visited[0])):
                         if not map_visited[row][col]:
-                            path_tem = DFS(pos, [col,row], map_conec)
-                            if len(path_tem) > 0:
-                                paths_temporal.append(path_tem)
+                            print(row, col)
+                            if col > 0:
+                                print(map_conec[row][col-1])
+                                if [row, col] in map_conec[row][col-1]:
+                                    path_tem = DFS(pos, [col, row], map_conec)
+                                    if len(path_tem) > 0:
+                                        paths_temporal.append(path_tem)
+                                    continue
+                            if col < 5:
+                                print(map_conec[row][col + 1])
+                                if [row, col] in map_conec[row][col+1]:
+                                    path_tem = DFS(pos, [col, row], map_conec)
+                                    if len(path_tem) > 0:
+                                        paths_temporal.append(path_tem)
+                                    continue
+                            if row > 0:
+                                print(map_conec[row-1][col])
+                                if [row, col] in map_conec[row-1][col]:
+                                    path_tem = DFS(pos, [col, row], map_conec)
+                                    if len(path_tem) > 0:
+                                        paths_temporal.append(path_tem)
+                                    continue
+                            if row < 7:
+                                print(map_conec[row + 1][col])
+                                if [row, col] in map_conec[row+1][col]:
+                                    path_tem = DFS(pos, [col,row], map_conec)
+                                    if len(path_tem) > 0:
+                                        paths_temporal.append(path_tem)
+                                    continue
                 print("Pos: ",pos)
                 print("__________________")
 
@@ -354,6 +376,7 @@ def main():
 
     # main code
     direction_look, pos, map_conec, map_color, colors_num = explorer(direction_look, pos)
+    print(map_conec)
 
     #color white
     pos_white, color_w = color_white(colors_num, map_color)
