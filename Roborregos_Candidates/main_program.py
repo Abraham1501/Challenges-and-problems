@@ -328,40 +328,14 @@ def main():
             if not bool:
                 print("________________")
                 print("back")
-                #pos_old = pos_stack.get()
                 paths_temporal = []
                 for row in range(len(map_visited)):
                     for col in range(len(map_visited[0])):
                         if not map_visited[row][col]:
-                            print(row, col)
-                            if col > 0:
-                                print(map_conec[row][col-1])
-                                if [row, col] in map_conec[row][col-1]:
-                                    path_tem = DFS(pos, [col, row], map_conec)
-                                    if len(path_tem) > 0:
-                                        paths_temporal.append(path_tem)
-                                    continue
-                            if col < 5:
-                                print(map_conec[row][col + 1])
-                                if [row, col] in map_conec[row][col+1]:
-                                    path_tem = DFS(pos, [col, row], map_conec)
-                                    if len(path_tem) > 0:
-                                        paths_temporal.append(path_tem)
-                                    continue
-                            if row > 0:
-                                print(map_conec[row-1][col])
-                                if [row, col] in map_conec[row-1][col]:
-                                    path_tem = DFS(pos, [col, row], map_conec)
-                                    if len(path_tem) > 0:
-                                        paths_temporal.append(path_tem)
-                                    continue
-                            if row < 7:
-                                print(map_conec[row + 1][col])
-                                if [row, col] in map_conec[row+1][col]:
-                                    path_tem = DFS(pos, [col,row], map_conec)
-                                    if len(path_tem) > 0:
-                                        paths_temporal.append(path_tem)
-                                    continue
+                            for position in map_conec[row][col]:
+                                if position != '.' and position != '_':
+                                    paths_temporal.append(DFS(pos,[col, row], map_conec))
+                                    break
                 print("Pos: ",pos)
                 print("__________________")
 
